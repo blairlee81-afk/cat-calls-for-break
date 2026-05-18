@@ -28,8 +28,11 @@ A Mac app that watches how long you've been working — and when you've been at 
 2. Open the `.dmg` and drag **Cat Break** into your Applications folder
 3. Open the app
 
-> **First time opening:** macOS may warn "unverified developer."
-> Right-click the app → Open → Open. Only needed once.
+> **First time opening:** macOS may say the app is "damaged." Fix it by opening Terminal and running:
+> ```bash
+> xattr -cr /Applications/Cat\ Break.app
+> ```
+> Then open the app normally. Only needed once.
 
 ---
 
