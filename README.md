@@ -45,8 +45,8 @@ Press **`Cmd + Shift + T`** to trigger the cat immediately (no need to wait an h
 ## 🛠 Run locally
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/cat-break.git
-cd cat-break
+git clone https://github.com/blairlee81-afk/cat-calls-for-break.git
+cd cat-calls-for-break
 npm install
 npm start
 ```
