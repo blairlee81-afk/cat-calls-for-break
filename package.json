@@ -1,0 +1,26 @@
+{
+  "name": "cat-break",
+  "version": "1.0.0",
+  "description": "A luxury cat that forces you to take breaks",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build": "electron-builder --mac"
+  },
+  "devDependencies": {
+    "electron": "^30.5.1",
+    "electron-builder": "^24.13.3"
+  },
+  "build": {
+    "appId": "com.catbreak.app",
+    "productName": "Cat Break",
+    "mac": {
+      "category": "public.app-category.productivity",
+      "target": "dmg"
+    },
+    "files": [
+      "**/*",
+      "assets/**/*"
+    ]
+  }
+}
