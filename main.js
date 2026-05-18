@@ -34,6 +34,7 @@ app.on('window-all-closed', (e) => {
 function createTray() {
   const icon = nativeImage.createEmpty()
   tray = new Tray(icon)
+  tray.setTitle('🐱')
   tray.setToolTip('Cat Break')
   updateTrayMenu()
 }
