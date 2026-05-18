@@ -18,7 +18,7 @@ A Mac app that watches how long you've been working — and when you've been at 
 
 ## 📸 Preview
 
-<!-- Add a screenshot or GIF here -->
+![Cat Break in action](preview.png)
 
 ---
 
