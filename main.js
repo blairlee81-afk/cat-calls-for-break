@@ -1,30 +1,33 @@
-const { app, BrowserWindow, ipcMain, Tray, Menu, nativeImage, powerMonitor, globalShortcut } = require('electron')
-const path = require('path')
+const {
+  app, BrowserWindow, ipcMain, Tray, Menu,
+  nativeImage, powerMonitor, globalShortcut, screen
+} = require('electron')
 
-const WORK_LIMIT_MS = 60 * 60 * 1000      // 1 hour
-const IDLE_THRESHOLD_S = 5 * 60           // 5 minutes idle = pause timer
-const SNOOZE_MS = 20 * 60 * 1000          // 20 minutes snooze
+const WORK_LIMIT_MS  = 60 * 60 * 1000   // 1 hour
+const IDLE_THRESHOLD_S = 5 * 60         // 5 minutes idle = pause timer
+const SNOOZE_MS      = 20 * 60 * 1000  // 20 minutes snooze
 
-let overlayWindow = null
-let tray = null
-let workTimer = 0
-let lastTick = Date.now()
-let timerInterval = null
-let snoozedUntil = 0
+let overlayWindow  = null
+let tray           = null
+let workTimer      = 0
+let lastTick       = Date.now()
+let timerInterval  = null
+let snoozedUntil   = 0
 let overlayVisible = false
 
 app.whenReady().then(() => {
   createTray()
   startWorkTimer()
 
-  // 开发者测试快捷键：Cmd+Shift+T 触发弹窗
+  // Developer test shortcut: Cmd+Shift+T
   globalShortcut.register('CommandOrControl+Shift+T', () => {
-    if (overlayVisible) {
-      closeOverlay()
-    } else {
-      showOverlay()
-    }
+    if (overlayVisible) closeOverlay()
+    else showOverlay()
   })
+})
+
+app.on('will-quit', () => {
+  globalShortcut.unregisterAll()
 })
 
 app.on('window-all-closed', (e) => {
@@ -45,7 +48,7 @@ function updateTrayMenu() {
     { label: `Active: ${minutes} min / 60 min`, enabled: false },
     { type: 'separator' },
     { label: 'Take a break now', click: showOverlay },
-    { label: 'Reset timer', click: resetTimer },
+    { label: 'Reset timer', click: () => { resetTimer(); closeOverlay() } },
     { type: 'separator' },
     { label: 'Quit', click: () => app.exit(0) }
   ])
@@ -56,7 +59,7 @@ function startWorkTimer() {
   lastTick = Date.now()
   timerInterval = setInterval(() => {
     const idleSeconds = powerMonitor.getSystemIdleTime()
-    const now = Date.now()
+    const now   = Date.now()
     const delta = now - lastTick
     lastTick = now
 
@@ -73,8 +76,7 @@ function startWorkTimer() {
 }
 
 function resetTimer() {
-  workTimer = 0
-  overlayVisible = false
+  workTimer    = 0
   snoozedUntil = 0
 }
 
@@ -82,7 +84,6 @@ function showOverlay() {
   if (overlayVisible) return
   overlayVisible = true
 
-  const { screen } = require('electron')
   const display = screen.getPrimaryDisplay()
   const { width, height } = display.bounds
 
@@ -108,19 +109,19 @@ function showOverlay() {
   overlayWindow.setAlwaysOnTop(true, 'screen-saver')
 }
 
-ipcMain.on('quit-app', () => {
-  // ✕ 按钮 = 关闭这次提醒，20分钟后再提
-  snoozedUntil = Date.now() + SNOOZE_MS
-  resetTimer()
+// ✕ button — just dismiss this break, no snooze
+ipcMain.on('dismiss', () => {
   closeOverlay()
 })
 
+// Snooze — come back in 20 min
 ipcMain.on('snooze', () => {
   snoozedUntil = Date.now() + SNOOZE_MS
   resetTimer()
   closeOverlay()
 })
 
+// Break finished naturally
 ipcMain.on('break-done', () => {
   resetTimer()
   closeOverlay()

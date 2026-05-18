@@ -36,6 +36,14 @@ A Mac app that watches how long you've been working — and when you've been at 
 
 ---
 
+## 🐱 Menu bar icon
+
+Once running, Cat Break lives in your **menu bar** as a 🐱 icon. Click it to:
+- See how many minutes you've been active
+- Trigger a break manually
+- Reset the timer
+- Quit the app
+
 ## 🧪 Test it instantly
 
 Press **`Cmd + Shift + T`** to trigger the cat immediately (no need to wait an hour).

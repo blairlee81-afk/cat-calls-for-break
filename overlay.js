@@ -18,10 +18,19 @@ const messages = [
 ]
 
 function formatTime(s) {
-  const m = Math.floor(s / 60)
+  const m   = Math.floor(s / 60)
   const sec = s % 60
   return `${m}:${sec.toString().padStart(2, '0')}`
 }
+
+// Elements
+const backdrop    = document.getElementById('backdrop')
+const catWrap     = document.getElementById('cat-wrap')
+const card        = document.getElementById('card')
+const messageEl   = document.getElementById('message')
+const countdownEl = document.getElementById('countdown')
+const snoozeBtn   = document.getElementById('snooze-btn')
+const quitBtn     = document.getElementById('quit-btn')
 
 // Canvas-based black background removal
 const video  = document.getElementById('cat-video')
@@ -33,32 +42,24 @@ video.addEventListener('loadedmetadata', () => {
   canvas.height = video.videoHeight
 })
 
+let rafId = null
 function removeBlack() {
   if (video.paused || video.ended) return
   ctx.drawImage(video, 0, 0)
   const frame = ctx.getImageData(0, 0, canvas.width, canvas.height)
   const d = frame.data
   for (let i = 0; i < d.length; i += 4) {
-    const r = d[i], g = d[i+1], b = d[i+2]
-    // 如果像素接近黑色，设为透明
-    if (r < 40 && g < 40 && b < 40) d[i+3] = 0
+    if (d[i] < 40 && d[i+1] < 40 && d[i+2] < 40) d[i+3] = 0
   }
   ctx.putImageData(frame, 0, 0)
-  requestAnimationFrame(removeBlack)
+  rafId = requestAnimationFrame(removeBlack)
 }
-video.addEventListener('play', removeBlack)
+video.addEventListener('play', () => { rafId = requestAnimationFrame(removeBlack) })
 
-const backdrop  = document.getElementById('backdrop')
-const catWrap   = document.getElementById('cat-wrap')
-const card      = document.getElementById('card')
-const messageEl = document.getElementById('message')
-const countdownEl = document.getElementById('countdown')
-const snoozeBtn = document.getElementById('snooze-btn')
-const quitBtn   = document.getElementById('quit-btn')
-
+// Set random message
 messageEl.textContent = messages[Math.floor(Math.random() * messages.length)]
 
-// Animate in — cat appears immediately
+// Animate in immediately
 requestAnimationFrame(() => {
   backdrop.classList.add('visible')
   catWrap.classList.add('show')
@@ -67,34 +68,46 @@ requestAnimationFrame(() => {
 
 // Countdown
 let remaining = BREAK_DURATION_S
+countdownEl.textContent = formatTime(remaining)
+
 const interval = setInterval(() => {
   remaining--
-  countdownEl.textContent = formatTime(remaining)
   if (remaining <= 0) {
     clearInterval(interval)
+    countdownEl.textContent = '0:00'
     animateOut(() => ipcRenderer.send('break-done'))
+  } else {
+    countdownEl.textContent = formatTime(remaining)
   }
 }, 1000)
 
+// Snooze button
 snoozeBtn.addEventListener('click', () => {
   clearInterval(interval)
   animateOut(() => ipcRenderer.send('snooze'))
 })
 
-quitBtn.addEventListener('click', () => ipcRenderer.send('quit-app'))
+// ✕ button — just dismiss, no snooze
+quitBtn.addEventListener('click', () => {
+  clearInterval(interval)
+  animateOut(() => ipcRenderer.send('dismiss'))
+})
+
+// Escape = snooze
 document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') ipcRenderer.send('quit-app')
+  if (e.key === 'Escape') {
+    clearInterval(interval)
+    animateOut(() => ipcRenderer.send('snooze'))
+  }
 })
 
 function animateOut(callback) {
-  card.style.opacity = '0'
+  if (rafId) cancelAnimationFrame(rafId)
+  card.style.opacity  = '0'
   card.style.transition = 'opacity 0.6s ease'
-  // 记录当前位置让猫咪从当前位置飞出
-  const currentLeft = catWrap.getBoundingClientRect().left
-  catWrap.style.setProperty('--cat-pos', currentLeft + 'px')
   catWrap.classList.remove('show')
   catWrap.classList.add('hide')
-  backdrop.style.opacity = '0'
+  backdrop.style.opacity   = '0'
   backdrop.style.transition = 'opacity 1.2s ease 0.4s'
   setTimeout(callback, 2000)
 }
